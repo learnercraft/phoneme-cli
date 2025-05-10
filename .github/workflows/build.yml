@@ -32,14 +32,22 @@ jobs:
               uses: actions/setup-python@main
               with:
                   python-version: "3.12"
+                  architecture: 'x64'
+                  cache: 'pip'
+                  cache-dependency-path: |
+                      **/requirements*.txt
 
-            - name: Install Nuitka and dependencies
+            - name: Install Dependencies
               run: |
-                  python -m pip install --upgrade pip
-                  pip install nuitka numpy torch torchaudio transformers huggingface_hub
+                pip install -r requirements.txt -r requirements-dev.txt -r requirements-repo.txt
 
-            - name: Build with Nuitka
-              run: python build.py
+            - name: Build Executable with Nuitka
+              uses: Nuitka/Nuitka-Action@main
+              with:
+                nuitka-version: main
+                script-name: build.py
+                mode: app
+                # Add any other Nuitka options you need
 
             - name: Get latest tag
               id: get_tag
@@ -74,5 +82,9 @@ jobs:
             - name: Upload Nuitka build artifact
               uses: actions/upload-artifact@main
               with:
-                  name: nuitka-dist-${{ matrix.os }}
-                  path: dist/
+                  name: ${{ runner.os }} Build
+                  path: |
+                    build/*.exe
+                    build/*.bin
+                    build/*.app/**/*
+                  include-hidden-files: true
