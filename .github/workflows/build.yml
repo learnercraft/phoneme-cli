@@ -1,0 +1,83 @@
+name: Build and Release Nuitka Standalone
+
+on:
+    push:
+        branches:
+            - main
+
+permissions:
+    contents: write
+    pages: write
+    id-token: write
+    pull-requests: write
+    issues: write
+    actions: read
+    checks: write
+
+env:
+    PACKAGE_VERSION: 0.1.0
+
+jobs:
+    build-and-release:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [windows-latest, ubuntu-latest, macos-latest]
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@main
+
+            - name: Set up Python
+              uses: actions/setup-python@main
+              with:
+                  python-version: "3.12"
+
+            - name: Install Nuitka and dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install nuitka numpy torch torchaudio transformers huggingface_hub
+
+            - name: Build with Nuitka
+              run: python build.py
+
+            - name: Get latest tag
+              id: get_tag
+              shell: bash
+              run: |
+                  latest_tag=$(git tag | sort -V | tail -n 1)
+                  if [ -z "$latest_tag" ]; then
+                    new_tag="v${{ env.PACKAGE_VERSION }}"
+                  else
+                    random_str=$(openssl rand -hex 4)
+                    version_prefix=${{ env.PACKAGE_VERSION }}
+                    new_tag="${version_prefix}-${random_str}"
+                  fi
+                  echo "LATEST_TAG=$new_tag" >> $GITHUB_ENV
+
+            - name: Configure git for tagging
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            - name: Create tag
+              run: |
+                  git tag ${{ env.LATEST_TAG }}
+                  git push origin ${{ env.LATEST_TAG }}
+
+            - name: Create GitHub release
+              id: create_release
+              uses: softprops/action-gh-release@c43d7637b9b9ce3e953168c325d27253a5d48d8e
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ env.LATEST_TAG }}
+                  name: v${{ env.PACKAGE_VERSION }}
+                  body: |
+                      Release version ${{ env.PACKAGE_VERSION }} of the project.
+
+            - name: Upload Nuitka build artifact
+              uses: actions/upload-artifact@main
+              with:
+                  name: nuitka-dist-${{ matrix.os }}
+                  path: dist/
