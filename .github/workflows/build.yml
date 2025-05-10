@@ -39,7 +39,7 @@ jobs:
 
             - name: Install Dependencies
               run: |
-                pip install -r requirements.txt -r requirements-dev.txt -r requirements-repo.txt
+                pip install -r requirements-repo.txt
 
             - name: Build Executable with Nuitka
               uses: Nuitka/Nuitka-Action@main
