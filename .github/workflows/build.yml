@@ -15,7 +15,7 @@ permissions:
     checks: write
 
 env:
-    PACKAGE_VERSION: 0.1.0
+    PACKAGE_VERSION: 0.2.0
 
 jobs:
     build:
