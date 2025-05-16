@@ -15,7 +15,7 @@ permissions:
     checks: write
 
 env:
-    PACKAGE_VERSION: 0.4.0
+    PACKAGE_VERSION: 0.4.1
 
 jobs:
     build:
@@ -46,7 +46,7 @@ jobs:
               with:
                   nuitka-version: main
                   script-name: phoneme-cmd.py
-                  mode: standalone
+                  mode: onefile
                   output-dir: phoneme-cli
                   # Add any other Nuitka options you need
 
