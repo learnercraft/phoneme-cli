@@ -15,7 +15,7 @@ permissions:
     checks: write
 
 env:
-    PACKAGE_VERSION: 0.2.0
+    PACKAGE_VERSION: 0.3.0
 
 jobs:
     build:
@@ -49,14 +49,24 @@ jobs:
                   mode: app
                   # Add any other Nuitka options you need
 
+            - name: Zip macOS app bundle
+              if: matrix.os == 'macos-latest'
+              run: |
+                  mkdir -p phoneme-cli-mac
+                  mv build.app phoneme-cli-mac/phoneme-cli.app
+                  cd phoneme-cli-mac
+                  zip -r ../phoneme-cli-mac.zip phoneme-cli.app
+              shell: bash
+
             - name: Upload Nuitka build artifact
               uses: actions/upload-artifact@main
               with:
                   name: ${{ runner.os }} Build
                   path: |
-                      build/*.exe
-                      build/*.bin
-                      build/*.app/**/*
+                      phoneme-cli/*.exe
+                      phoneme-cli/*.bin
+                      phoneme-cli.app/**/*
+                      phoneme-cli-mac.zip
                   include-hidden-files: true
 
     release:
@@ -73,7 +83,7 @@ jobs:
             - name: Download all build artifacts
               uses: actions/download-artifact@main
               with:
-                  path: ./build
+                  path: ./phoneme-cli
 
             - name: Get latest tag
               id: get_tag
@@ -106,14 +116,17 @@ jobs:
                       Release version ${{ env.PACKAGE_VERSION }} of the project.
 
             - name: Display the release directory structure
-              run: ls -R ./build
+              run: ls -R ./phoneme-cli
 
             - name: Upload Release Assets
               run: |
-                  for file in ./build/**/*; do
+                  for file in ./phoneme-cli/**/*; do
                     if [ -f "$file" ]; then
                       gh release upload "${{ env.LATEST_TAG }}" "$file" --clobber
                     fi
                   done
+                  if [ -f ./phoneme-cli-mac.zip ]; then
+                    gh release upload "${{ env.LATEST_TAG }}" ./phoneme-cli-mac.zip --clobber
+                  fi
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
