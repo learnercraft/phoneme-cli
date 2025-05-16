@@ -15,7 +15,7 @@ permissions:
     checks: write
 
 env:
-    PACKAGE_VERSION: 0.3.0
+    PACKAGE_VERSION: 0.4.0
 
 jobs:
     build:
@@ -45,15 +45,16 @@ jobs:
               uses: Nuitka/Nuitka-Action@main
               with:
                   nuitka-version: main
-                  script-name: build.py
-                  mode: app
+                  script-name: phoneme-cmd.py
+                  mode: standalone
+                  output-dir: phoneme-cli
                   # Add any other Nuitka options you need
 
             - name: Zip macOS app bundle
               if: matrix.os == 'macos-latest'
               run: |
                   mkdir -p phoneme-cli-mac
-                  mv build.app phoneme-cli-mac/phoneme-cli.app
+                  mv phoneme-cli.app phoneme-cli-mac/phoneme-cli.app
                   cd phoneme-cli-mac
                   zip -r ../phoneme-cli-mac.zip phoneme-cli.app
               shell: bash
